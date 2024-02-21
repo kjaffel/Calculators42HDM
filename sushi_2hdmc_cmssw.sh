@@ -8,7 +8,7 @@ if [[ ! -d "$DIR" ]]; then
     git clone -o upstream git@github.com:kjaffel/Calculators42HDM.git $DIR
 fi
 scram b
-cmsenv
+eval `scramv1 runtime -sh` # This is equivalent to cmsenv
 
 pwd
 pushd $DIR

@@ -70,6 +70,7 @@ class Calc2HDM:
         self.AtoZHBR =None
         self.HtobbBR =None
         self.AtobbBR =None
+        self.htobbBR =None
 
     def __str__(self):
         return """
@@ -120,7 +121,9 @@ class Calc2HDM:
         def float_to_str(f):
             return str(f).replace('.', 'p')
         
-        sushiCardName = 'mH_{}_mA_{}_tb_{}_cba_{}_mode_{}'.format(float_to_str(self.mH), float_to_str(self.mA), float_to_str(self.tb), float_to_str(self.sba), str(self.mode)) 
+        sushiCardName = 'mH_{}_mA_{}_tb_{}_cba_{}_mode_{}'.format(
+                float_to_str(self.mH), float_to_str(self.mA), float_to_str(self.tb), float_to_str(self.sba), str(self.mode)) 
+        
         sushiDefaultCardPath = "default_cards/default_sushi.in"
         sushiInputCardPath   = "Scan/" + str(self.pdf) +'/' + sushiCardName + ".in"
         sushiOutputCardPath  = "Scan/" + str(self.pdf) +'/' + sushiCardName + ".out"
@@ -128,6 +131,7 @@ class Calc2HDM:
         path_tosushi_output_cards="Scan/"+ str(self.pdf)
         if not os.path.exists(path_tosushi_output_cards):
             os.makedirs(path_tosushi_output_cards)
+        
         # Replacements of variables into the input file
         replacements = {
             'MODE':str(self.mode),
@@ -158,20 +162,24 @@ class Calc2HDM:
      
         #running SusHi
         pwd = os.getcwd()
-        run_sushi = ["../../SusHi-1.7.0/bin/sushi", sushiCardName + ".in", sushiCardName + ".out"]
-        print( " ".join(run_sushi) )
         
+        #run_sushi = ["../../SusHi-1.7.0/bin/sushi", sushiCardName + ".in", sushiCardName + ".out"]
+        #run_sushi = ["{}/SusHi-1.7.0/bin/sushi".format(pwd), sushiCardName + ".in", sushiCardName + ".out"]
+        run_sushi  = "{}/SusHi-1.7.0/bin/sushi {}.in {}.out".format(pwd, sushiCardName, sushiCardName)
+        print( "Running command:", run_sushi )
+
         sushi_out = 'Scan/sushilogs'
         if not os.path.isdir(sushi_out):
             os.makedirs(sushi_out)
-        
+
         # overwrite these files 
-        outputExists  = False 
-        #outputExists = os.path.isfile(os.path.join(sushi_out, sushiCardName+'.log') )
+        #outputExists = False 
+        outputExists  = os.path.isfile(os.path.join(pwd, sushiOutputCardPath) )
         if not outputExists:
-            logFile = os.path.join(sushi_out, 'sushi1.7.0_'+sushiCardName+'.log')
+            logFile = os.path.join(pwd, sushi_out, 'sushi1.7.0_'+sushiCardName+'.log')
+            print("Current working directory:", os.getcwd())
             with open(logFile, 'w+') as f:
-                p = subprocess.Popen(run_sushi, stdout=f, stderr=f, cwd=os.path.join(pwd, path_tosushi_output_cards ))
+                p = subprocess.Popen(run_sushi, stdout=f, stderr=f, shell=True, cwd=os.path.join(pwd, path_tosushi_output_cards))
                 p.communicate()
         else:
             print('# SusHi was run already, looking for results in %s' % sushiOutputCardPath)
@@ -209,93 +217,95 @@ class Calc2HDM:
         mb_MSscheme_muR = 0.
         
         # extracting xsec from the output file
-        with open(os.path.join(pwd, sushiOutputCardPath),'r') as f:
-            Block = None
-            for line in f:
+        cross_section = None
+        if os.path.exists(os.path.join(pwd, sushiOutputCardPath)):
+            with open(os.path.join(pwd, sushiOutputCardPath),'r') as f:
+                Block = None
+                for line in f:
 
-                if line.startswith('Block'):
-                        Block = line.split()[1]
+                    if line.startswith('Block'):
+                            Block = line.split()[1]
 
-                if '# m_b for bottom Yukawa' in line:
-                    mb_MSscheme_muR = line.split()[1]
-                
-                if Block == 'SUSHIggh':
-                    if 'ggh XS in pb' in line:
+                    if '# m_b for bottom Yukawa' in line:
+                        mb_MSscheme_muR = line.split()[1]
+                    
+                    if Block == 'SUSHIggh':
+                        if 'ggh XS in pb' in line:
+                            if ' 1 ' in line:
+                                Xsec_gg = line.split()[1]
+                            elif ' 101 ' in line:
+                                integerror_gg = line.split()[1]
+                            elif ' 102 ' in line:
+                                muRm_gg = line.split()[1]
+                            elif ' 103 ' in line:
+                                muRp_gg = line.split()[1]
+
+                    if Block == 'SUSHIbbh':
+                        if 'bbh XS in pb' in line:
+                            if ' 1 ' in line:
+                                Xsec_bb = line.split()[1]
+                            elif ' 101 ' in line:
+                                integerror_bb = line.split()[1]
+
+                    if Block == 'XSGGH':
                         if ' 1 ' in line:
-                            Xsec_gg = line.split()[1]
+                            ggh_lo = line.split()[1] ## LO w/ NLO PDFs
                         elif ' 101 ' in line:
-                            integerror_gg = line.split()[1]
+                            integerror_ggh_lo = line.split()[1]
+                        
+                        elif ' 2 ' in line:
+                            ggh_nlo = line.split()[1]
                         elif ' 102 ' in line:
-                            muRm_gg = line.split()[1]
-                        elif ' 103 ' in line:
-                            muRp_gg = line.split()[1]
+                            integerror_ggh_nlo = line.split()[1]
+                        
+                        if ' NLO gg' in line:
+                            if ' 21 ' in line:
+                                subprocess_gg_nlo = line.split()[1]
+                            elif ' 121 ' in line:
+                                integerror_gg_nlo = line.split()[1]
+                        
+                        if ' NLO qg' in line:
+                            if ' 22 ' in line:
+                                subprocess_qg_nlo = line.split()[1]
+                            elif ' 122 ' in line:
+                                integerror_qg_nlo = line.split()[1]
 
-                if Block == 'SUSHIbbh':
-                    if 'bbh XS in pb' in line:
+                        if ' NLO qq' in line:
+                            if ' 23 ' in line:
+                                subprocess_qq_nlo = line.split()[1]
+                            elif ' 123 ' in line:
+                                integerror_qq_nlo = line.split()[1]
+                        
+                    if Block == 'XSBBH':
                         if ' 1 ' in line:
-                            Xsec_bb = line.split()[1]
+                            bbh_lo = line.split()[1]
+                        elif ' 2 ' in line:
+                            bbh_nlo = line.split()[1]
+                        elif ' 3 ' in line:
+                            bbh_nnlo = line.split()[1]
                         elif ' 101 ' in line:
-                            integerror_bb = line.split()[1]
-
-                if Block == 'XSGGH':
-                    if ' 1 ' in line:
-                        ggh_lo = line.split()[1] ## LO w/ NLO PDFs
-                    elif ' 101 ' in line:
-                        integerror_ggh_lo = line.split()[1]
+                            integerror_bbh_lo = line.split()[1]
+                        elif ' 102 ' in line:
+                            integerror_bbh_nlo = line.split()[1]
+                        elif ' 103 ' in line:
+                            integerror_bbh_nnlo = line.split()[1]
                     
-                    elif ' 2 ' in line:
-                        ggh_nlo = line.split()[1]
-                    elif ' 102 ' in line:
-                        integerror_ggh_nlo = line.split()[1]
-                    
-                    if ' NLO gg' in line:
-                        if ' 21 ' in line:
-                            subprocess_gg_nlo = line.split()[1]
-                        elif ' 121 ' in line:
-                            integerror_gg_nlo = line.split()[1]
-                    
-                    if ' NLO qg' in line:
-                        if ' 22 ' in line:
-                            subprocess_qg_nlo = line.split()[1]
-                        elif ' 122 ' in line:
-                            integerror_qg_nlo = line.split()[1]
-
-                    if ' NLO qq' in line:
-                        if ' 23 ' in line:
-                            subprocess_qq_nlo = line.split()[1]
-                        elif ' 123 ' in line:
-                            integerror_qq_nlo = line.split()[1]
-                    
-                if Block == 'XSBBH':
-                    if ' 1 ' in line:
-                        bbh_lo = line.split()[1]
-                    elif ' 2 ' in line:
-                        bbh_nlo = line.split()[1]
-                    elif ' 3 ' in line:
-                        bbh_nnlo = line.split()[1]
-                    elif ' 101 ' in line:
-                        integerror_bbh_lo = line.split()[1]
-                    elif ' 102 ' in line:
-                        integerror_bbh_nlo = line.split()[1]
-                    elif ' 103 ' in line:
-                        integerror_bbh_nnlo = line.split()[1]
-                
-                if Block =='HGGSUSY':
-                    # we don't want to go there 
-                    # this will overwrite the values we already get
-                    break
-        
-        cross_section = {"split": 
-                                { 'gg_nlo'  : (float(subprocess_gg_nlo), float(integerror_gg_nlo) ), 
-                                  'qg_nlo'  : (float(subprocess_qg_nlo), float(integerror_qg_nlo) ),
-                                  'qq_nlo'  : (float(subprocess_qq_nlo), float(integerror_qq_nlo) ),
-                                  'bbh_lo'  : (float(bbh_lo),   float(integerror_bbh_lo) ),
-                                  'bbh_nlo' : (float(bbh_nlo),  float(integerror_bbh_nlo) ),
-                                  'bbh_nnlo': (float(bbh_nnlo), float(integerror_bbh_nnlo) )
-                                  },
-                        "full": { 'ggh': (float(Xsec_gg), float(integerror_gg)), 
-                                  'bbh': (float(Xsec_bb), float(integerror_bb)) }
-                        }
+                    if Block =='HGGSUSY':
+                        # we don't want to go there 
+                        # this will overwrite the values we already get
+                        break
+            
+            cross_section = {"split": 
+                                    { 'gg_nlo'  : (float(subprocess_gg_nlo), float(integerror_gg_nlo) ), 
+                                      'qg_nlo'  : (float(subprocess_qg_nlo), float(integerror_qg_nlo) ),
+                                      'qq_nlo'  : (float(subprocess_qq_nlo), float(integerror_qq_nlo) ),
+                                      'bbh_lo'  : (float(bbh_lo),   float(integerror_bbh_lo) ),
+                                      'bbh_nlo' : (float(bbh_nlo),  float(integerror_bbh_nlo) ),
+                                      'bbh_nnlo': (float(bbh_nnlo), float(integerror_bbh_nnlo) )
+                                      },
+                            "full": { 'ggh': (float(Xsec_gg), float(integerror_gg)), 
+                                      'bbh': (float(Xsec_bb), float(integerror_bb)) }
+                            }
         return cross_section 
 
 

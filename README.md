@@ -12,7 +12,6 @@ Version used: ``2HDMC1.8.0`` and ``Sushi1.7.0``.
     cmsrel CMSSW_10_2_22
     cd CMSSW_10_2_22/src
     cmsenv
-    cd -
     git cms-init
 
     # Get and execute the install script
