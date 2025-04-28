@@ -1,30 +1,33 @@
-from math import atan2,degrees
-import numpy as np
+
 import logging
+import colorlog
+
+import numpy as np
+
+from math import atan2,degrees
+from colorlog import ColoredFormatter
+
 
 LOG_LEVEL = logging.DEBUG
-LOGFORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s"
-import colorlog
-from colorlog import ColoredFormatter
 logging.root.setLevel(LOG_LEVEL)
+LOGFORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s"
 formatter = ColoredFormatter(LOGFORMAT)
-stream = logging.StreamHandler()
+stream    = logging.StreamHandler()
 stream.setLevel(LOG_LEVEL)
 stream.setFormatter(formatter)
-logger = logging.getLogger("labelLine")
+logger    = logging.getLogger("labelLine")
 logger.setLevel(LOG_LEVEL)
 logger.addHandler(stream)
 
-#Label line with line2D label data
-def labelLine(line,x,label=None,align=True,**kwargs):
 
+def labelLine(line,x,label=None,align=True,**kwargs):
+    """Label line with line2D label data"""
     ax = line.axes
     xdata = line.get_xdata()
     ydata = line.get_ydata()
     
     if (abs(x) < abs(xdata[0])) or (abs(x) > abs(xdata[-1])):
         logger.warning('x label location is outside data range!')
-        #return
     #Find corresponding y co-ordinate and angle of the line
     ip = 1
     for i in range(len(xdata)):
@@ -60,11 +63,11 @@ def labelLine(line,x,label=None,align=True,**kwargs):
         kwargs['clip_on'] = True
     if 'zorder' not in kwargs:
         kwargs['zorder'] = 2.5
-
     ax.text(x,y,label,rotation=trans_angle,**kwargs)
+    return 
+
 
 def labelLines(lines,align=True,xvals=None,**kwargs):
-
     ax = lines[0].axes
     labLines = []
     labels = []
@@ -81,3 +84,5 @@ def labelLines(lines,align=True,xvals=None,**kwargs):
 
     for line,x,label in zip(labLines,xvals,labels):
         labelLine(line,x,label,align,**kwargs)
+    return 
+

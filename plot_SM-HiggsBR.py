@@ -1,29 +1,35 @@
 #!/usr/bin/python
+
 import math
-from cp3_llbb.Calculators42HDM.Calc2HDM import *
+import argparse
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse
+
+from cp3_llbb.Calculators42HDM.Calc2HDM import *
+from labellines import *
+
 
 def get_options():
     parser = argparse.ArgumentParser(description='Compare gg fusion and b-associated production xsc as function of tan beta ')
-    parser.add_argument('-lazy', '--lazy', action='store_true', required=False, help='This will allow you to do fast test, with few files saved in data/ ')
+    parser.add_argument('-lazy', '--lazy', action='store_true', required=False, 
+            help='This will allow you to do fast test, with few files saved in data/ ')
     options = parser.parse_args()
     return options
 
 def which_points(grid):
     grid['fullsim'] = [
         #( MH, MA )
-        ( 200, 50), 
+         ( 800, 660),
+        #( 200, 50), 
         #( 200, 100),
         #( 250, 50), ( 250, 100),
         #( 300, 50), ( 300, 100),
         #( 300, 200),
         #( 500, 50), 
         #( 500, 100), ( 500, 200), 
-        ( 500, 300), 
+        #( 500, 300), 
         #( 500, 400),
         #( 650, 50),
         #( 800, 50), ( 800, 100), 
@@ -32,25 +38,21 @@ def which_points(grid):
         #( 800, 700),
         #(1000, 50),              
         #(1000, 200),                           
-        (1000, 500),
+        #(1000, 500),
         ]
     return grid 
 
-options = get_options()
 def check_sm_higgs_BRin2hdm(H, A):
     mH = H
     mA = A
     mhc = max(mH, mA)
-
     sqrts = 13000
-    type = 2
+    type = 1
     tb = 0.5
     mh = 125.
     mZ = 91.1876
-    cba = 0.01
+    cba = 0.2
     mode = 'H'
-    outputFile = "out.dat"
-    
     tb_list = [] 
     results = {
                 'BRhtoss': [],
@@ -68,12 +70,22 @@ def check_sm_higgs_BRin2hdm(H, A):
     while tb < 60.:
         m12 = math.sqrt(pow(mhc, 2) * tb / (1 + pow(tb, 2)))
         tb_list.append(tb)
-    
         beta=math.atan(tb)
         alpha=math.atan(tb)-math.acos(cba)
         sba = math.sin(math.atan(tb)-alpha)
+        outputFile = "forhh_out_mH-{}_mA-{}_tb-{}_type-{}_mode-{}_cba-{}.dat".format(mH, mA, tb , type, mode, cba)
         
-        test = Calc2HDM(mode = 'H', sqrts = sqrts, type = type, tb = tb, m12 = m12, mh = mh, mH = mH, mA = mA, mhc = mhc, sba = sba, outputFile = outputFile)
+        test = Calc2HDM(mode = 'H', 
+                        sqrts = sqrts, 
+                        type = type, 
+                        tb = tb, 
+                        m12 = m12, 
+                        mh = mh, 
+                        mH = mH, 
+                        mA = mA, 
+                        mhc = mhc, 
+                        sba = sba, 
+                        outputFile = outputFile)
         
         test.setm12(m12)
         test.settb(tb)
@@ -81,7 +93,7 @@ def check_sm_higgs_BRin2hdm(H, A):
         test.setmA(mA)
         test.setmH(mH)
         test.computeBR()
-    
+        
         results['BRhtoss'].append(test.htossBR)
         results['BRhtocc'].append(test.htoccBR)
         results['BRhtobb'].append(test.htobbBR)
@@ -98,13 +110,11 @@ def check_sm_higgs_BRin2hdm(H, A):
         
     return results, tb_list
 
+options = get_options()
 Colors=['forestgreen', 'pink', 'crimson', 'magenta', 'indigo', 'limegreen', 'blueviolet', 'plum', 'purple', 'hotpink', 'mediumseagreen', 'springgreen', 'aquamarine', 'turquoise', 'aqua', 'mediumslateblue', 'orchid', 'deeppink', 'darkturquoise', 'teal', 'mediumslateblue']
-
-
 grid = {}
 grid = which_points(grid)
 
-from labellines import *
 for decayto in ['2fermions', '2gaugebosons']:
     idx=0
     for H, A in (grid['fullsim']):
@@ -118,7 +128,7 @@ for decayto in ['2fermions', '2gaugebosons']:
             plt.plot(tb_list,results['BRhtomumu'], color=Colors[idx+2], marker='o', label=r'$\mu^+\mu^-$')
             plt.plot(tb_list,results['BRhtocc'], color=Colors[idx+3], marker='o', label=r'c$\bar{c}$')
             
-        # from https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageBR
+            # from https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageBR
             # H --> 2 fermions
             # M(GeV)       BR ->bb          THU             PU(mq)         PU(alphas)
             # 125.00    5.824E-01   +0.65   -0.65   +0.72   -0.74   +0.78   -0.80 
@@ -158,11 +168,11 @@ for decayto in ['2fermions', '2gaugebosons']:
 
         idx +=1
 
-        plt.ylabel(r'$BR(SM Higgs\rightarrow XX)$')
+        plt.ylabel(r'BR(SM-Higgs vs SM-like $\rightarrow$ XX)')
         plt.xlabel(r'$tan\beta$')
         plt.yscale('log')
         #plt.xscale('log')
-        plt.title(r'$2HDM-typeII: M_{H^\pm}=M_{H}, cos(\beta-\alpha)= 0.01, mh= 125. GeV $', fontsize=10.)
+        plt.title(r'2HDM-typeI: $M_{H^\pm}=M_{H}$, $cos(\beta-\alpha)$= 0.01, mh= 125. GeV, SM-like (o), SM-Higgs (-)', fontsize=10.)
         plt.xlim(min(tb_list), max(tb_list))
         plt.ylim(1E-7, 1)
         plt.legend()

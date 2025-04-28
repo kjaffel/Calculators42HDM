@@ -45,7 +45,7 @@ class Calc2HDM:
         elif mode == 'A' :
             self.mode = 21
         else :
-            print "Wrong mode selected! Please, use h, H or A." 
+            print ("Wrong mode selected! Please, use h, H or A." )
 
         self.tb     = tb
         self.m12    = m12
@@ -66,12 +66,13 @@ class Calc2HDM:
         self.pdf    = "NNPDF31_nnlo_as_0118_nf_4_mc_hessian"
 
         # if kinematically not allowed 
+        #self.HtohhBR =None
         self.HtoZABR =None
         self.AtoZHBR =None
         self.HtobbBR =None
         self.AtobbBR =None
         self.htobbBR =None
-
+        self.HtottBR =None
     def __str__(self):
         return """
             tb= %.2f
