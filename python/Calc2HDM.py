@@ -1,9 +1,13 @@
 #!/usr/bin/python
-import subprocess
-import sys
-import math
+
 import os
+import sys
+import subprocess
+import math
 import logging
+import colorlog
+    
+from colorlog import ColoredFormatter
 
 LOG_LEVEL = logging.DEBUG
 stream    = logging.StreamHandler()
@@ -11,31 +15,26 @@ stream.setLevel(LOG_LEVEL)
 logger    = logging.getLogger("Calculators42HDM")
 logger.setLevel(LOG_LEVEL)
 logger.addHandler(stream)
-try:
-    import colorlog
-    from colorlog import ColoredFormatter
-    formatter = ColoredFormatter(
-    "%(log_color)s%(levelname)-8s%(reset)s %(log_color)s%(message)s",
-    datefmt=None,
-    reset=True,
-    log_colors={
-            'DEBUG':    'cyan',
-            'INFO':     'green',
-            'WARNING':  'blue',
-            'ERROR':    'red',
-            'CRITICAL': 'red',
+formatter = ColoredFormatter(
+"%(log_color)s%(levelname)-8s%(reset)s %(log_color)s%(message)s",
+datefmt=None,
+reset=True,
+log_colors={
+        'DEBUG':    'cyan',
+        'INFO':     'green',
+        'WARNING':  'blue',
+        'ERROR':    'red',
+        'CRITICAL': 'red',
         },
-        secondary_log_colors={},
-        style='%'
-        )
-    stream.setFormatter(formatter)
-except ImportError:
-    print( 'try this one for better logger printout: https://pypi.org/project/colorlog/')
-    pass
+secondary_log_colors={},
+style='%')
+stream.setFormatter(formatter)
 
 
 class Calc2HDM:
-    def __init__(self, mode = 'H', sqrts = 13000,  muR4ggh = 0.5, muF4ggh = 0.5, muR4bbh = 1., muF4bbh = 0.25, type = 2, tb = 1, m12 = 0, mh = 125., mH = 350., mA = 400., mhc = 420., sba = 0.99, outputFile = "out.dat"):
+    def __init__(self, mode = 'H', sqrts = 13000,  muR4ggh = 0.5, muF4ggh = 0.5, 
+            muR4bbh = 1., muF4bbh = 0.25, type = 2, tb = 1, m12 = 0, mh = 125., 
+            mH = 350., mA = 400., mhc = 420., sba = 0.99, outputFile = "out.dat"):
 
         # 11 = light Higgs (h), 12 = heavy Higgs (H), 21 = pseudoscalar (A)
         if mode == 'h' :
@@ -64,15 +63,14 @@ class Calc2HDM:
         self.BRcomputed = 0
         self.outputFile = outputFile
         self.pdf    = "NNPDF31_nnlo_as_0118_nf_4_mc_hessian"
-
-        # if kinematically not allowed 
-        #self.HtohhBR =None
+        self.HtohhBR =None
         self.HtoZABR =None
         self.AtoZHBR =None
         self.HtobbBR =None
         self.AtobbBR =None
         self.htobbBR =None
         self.HtottBR =None
+
     def __str__(self):
         return """
             tb= %.2f
@@ -90,7 +88,22 @@ class Calc2HDM:
             muR4bbh= %.2f
             muF4bbh= %.2f
             BRcomputed= %.2f
-            pdf= %s""" % (self.tb, self.m12, self.mh, self.mH, self.mA, self.mhc, self.sba, self.type, self.outputFile, self.sqrts, self.muR4ggh, self.muF4ggh, self.muR4bbh, self.muF4bbh, self.BRcomputed, self.pdf)
+            pdf= %s""" % (self.tb, 
+                          self.m12, 
+                          self.mh, 
+                          self.mH, 
+                          self.mA,
+                          self.mhc, 
+                          self.sba, 
+                          self.type, 
+                          self.outputFile, 
+                          self.sqrts, 
+                          self.muR4ggh, 
+                          self.muF4ggh, 
+                          self.muR4bbh, 
+                          self.muF4bbh, 
+                          self.BRcomputed, 
+                          self.pdf)
 
     def setmA(self, M) :
         self.mA = M
@@ -313,7 +326,18 @@ class Calc2HDM:
     def computeBR(self):
         pwd = os.getcwd()
         print(pwd)
-        command = ["./2HDMC-1.8.0/CalcPhys", str(self.mh), str(self.mH), str(self.mA), str(self.mhc), str(self.sba), "0", "0", str(self.m12_2), str(self.tb), str(self.type), self.outputFile]
+        command = ["./2HDMC-1.8.0/CalcPhys", 
+                   str(self.mh), 
+                   str(self.mH), 
+                   str(self.mA), 
+                   str(self.mhc), 
+                   str(self.sba), 
+                   "0", 
+                   "0", 
+                   str(self.m12_2), 
+                   str(self.tb), 
+                   str(self.type), 
+                   self.outputFile]
         
         # overwrite these files 
         #outputExists = False
