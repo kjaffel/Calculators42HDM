@@ -5,7 +5,7 @@ import sys
 
 
 def getXsecFromSusHi( mode = 'H', sqrts = 13000, tb = 1, m12 = 0, mh = 125, mH = 350, mA = 350, 
-        mhc = 350, sba = 0.99, muR4ggh = 0.5, muF4ggh = 0.5, muR4bbh = 1., muR4bbh = 0.25):
+        mhc = 350, sba = 0.99, muR4ggh = 0.5, muF4ggh = 0.5, muR4bbh = 1., muF4bbh = 0.25):
 
     sushiDefaultCardPath = "default_cards/default_sushi.in"
     sushiInputCardPath = "Scan/"+str(mH)+"_"+str(mA)+".in"
