@@ -62,15 +62,15 @@ class Calc2HDM:
         self.muF4bbh= muF4bbh
         self.BRcomputed = 0
         self.outputFile = outputFile
-        self.pdf    = "NNPDF31_nnlo_as_0118_nf_4_mc_hessian"
-        self.HtohhBR =None
-        self.HtoZABR =None
-        self.AtoZHBR =None
-        self.HtobbBR =None
-        self.AtobbBR =None
-        self.htobbBR =None
-        self.HtottBR =None
-
+        self.pdf     = "NNPDF31_nnlo_as_0118_nf_4_mc_hessian"
+        self.HtohhBR = None
+        self.HtoZABR = None
+        self.AtoZHBR = None
+        self.HtobbBR = None
+        self.AtobbBR = None
+        self.htobbBR = None
+        self.HtottBR = None
+        self.AtohhBR = None
     def __str__(self):
         return """
             tb= %.2f
@@ -362,6 +362,10 @@ class Calc2HDM:
                         myLine=line.replace('H  -> b  b     ', '')
                         myLine2=myLine.split()[0]
                         self.wh2tobb = float(myLine2)
+                    if 'h  -> b  b' in line:
+                        myLine=line.replace('h  -> b  b     ', '')
+                        myLine2=myLine.split()[0]
+                        self.wh1tobb = float(myLine2)
 
         UnitLine = None
         PertLine = None
